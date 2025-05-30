@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Arraiá Sinérjico 🎉</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue-main: #0073e6;
+      --gray-light: #f2f2f2;
+      --green-light: #28a745;
+      --green-institutional: #1d7c74;
+      --yellow-warm: #ffc107;
+      --cyan-vibrant: #1ccce4;
+      --red-alert: #dc3545;
+      --yellow-highlight: #ffe11f;
+    }
+
+    body {
+      margin: 0;
+      background: var(--gray-light);
+      font-family: 'Quicksand', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    #card {
+      background: white;
+      padding: 1.75rem 1.25rem 2.25rem;
+      border-radius: 1rem;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+      width: 380px;
+      text-align: center;
+      border-top: 8px solid var(--blue-main);
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--blue-main);
+    }
+
+    .date {
+      font-weight: 600;
+    }
+
+    .loc {
+      font-style: italic;
+      color: var(--green-institutional);
+    }
+
+    .accent {
+      font-weight: bold;
+      color: var(--yellow-warm);
+    }
+
+    canvas {
+      border: 3px solid var(--blue-main);
+      border-radius: 0.75rem;
+      background: var(--cyan-vibrant);
+      cursor: crosshair;
+      margin-top: 1.2rem;
+    }
+
+    #msg {
+      margin-top: 0.75rem;
+      font-weight: 600;
+    }
+
+    #pontuacao {
+      margin-top: 0.5rem;
+      font-weight: bold;
+      color: var(--green-light);
+    }
+  </style>
+</head>
+<body>
+  <div id="card">
+    <img src="Convite arraial festa junina colorido (3).png" alt="Convite" style="width:100%; border-radius: 0.5rem;">
+    <h1>Arraiá Sinérjico 🎉</h1>
+    <div class="date">🗓️ 20 de Junho de 2025 • ⏰ A partir das 15h</div>
+    <div class="loc">📍 Escritório da Sinerji HQ</div>
+    <p>Traga seu pratinho típico para compartilhar e venha celebrar com a gente! 🌽🥜🍰</p>
+    <p>Nesta data especial, também cantaremos parabéns para os aniversariantes do mês! 🎉</p>
+    <p class="accent">Contamos com sua presença para essa festança!</p>
+
+    <div id="pontuacao">🎯 Pontuação: 0</div>
+    <canvas id="gameCanvas" width="330" height="250"></canvas>
+    <div id="msg">Clique no lago para lançar o anzol!</div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const hookSpeed = 4;
+    const fishSpeed = 2;
+    const fishW = 55;
+    const fishH = 28;
+    const fishY = 195;
+    let fishX = Math.random() * (canvas.width - fishW);
+    let fishDir = Math.random() < 0.5 ? 1 : -1;
+    let hook = { x: 0, y: -30, active: false };
+    let pontuacao = 0;
+
+    function drawFish() {
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--green-light');
+      ctx.beginPath();
+      ctx.ellipse(fishX + fishW/2, fishY + fishH/2, fishW/2, fishH/2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      const tailX = fishDir > 0 ? fishX : fishX + fishW;
+      ctx.moveTo(tailX, fishY + fishH/2);
+      ctx.lineTo(tailX + fishDir * 18, fishY);
+      ctx.lineTo(tailX + fishDir * 18, fishY + fishH);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.beginPath();
+      const eyeX = fishDir > 0 ? fishX + fishW - 12 : fishX + 12;
+      ctx.arc(eyeX, fishY + fishH/2 - 4, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.arc(eyeX, fishY + fishH/2 - 4, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawHook() {
+      if (!hook.active) return;
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(hook.x, 0);
+      ctx.lineTo(hook.x, hook.y);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(hook.x, hook.y);
+      ctx.lineTo(hook.x + 8, hook.y + 12);
+      ctx.lineTo(hook.x, hook.y + 8);
+      ctx.lineTo(hook.x - 8, hook.y + 12);
+      ctx.closePath();
+      ctx.fillStyle = '#555';
+      ctx.fill();
+    }
+
+    function resetHook() {
+      hook.active = false;
+      hook.y = -30;
+    }
+
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      fishX += fishDir * fishSpeed;
+      if (fishX <= 0 || fishX + fishW >= canvas.width) fishDir *= -1;
+
+      if (hook.active) {
+        hook.y += hookSpeed;
+        if (hook.y > canvas.height) {
+          document.getElementById('msg').textContent = 'Escapou! Clique para tentar novamente.';
+          resetHook();
+        } else if (hook.y >= fishY && hook.x >= fishX && hook.x <= fishX + fishW) {
+          pontuacao++;
+          document.getElementById('pontuacao').textContent = '🎯 Pontuação: ' + pontuacao;
+          document.getElementById('msg').textContent = 'Peixe fisgado! 🐟 Clique para jogar de novo.';
+          resetHook();
+        }
+      }
+
+      drawFish();
+      drawHook();
+      requestAnimationFrame(update);
+    }
+
+    canvas.addEventListener('click', (e) => {
+      if (hook.active) return;
+      const rect = canvas.getBoundingClientRect();
+      hook.x = e.clientX - rect.left;
+      hook.y = 0;
+      hook.active = true;
+      document.getElementById('msg').textContent = '...pescando...';
+    });
+
+    update();
+  </script>
+</body>
+</html>
